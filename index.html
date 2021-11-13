@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>Joint plot</title>
+
+    <script src="scatter_plot.js"></script>
+    <script src="bar_plot.js"></script>
+
+    <link rel="stylesheet" href="./styles/style.css" />
+    <style></style>
+    <script src="./lib/d3.js"></script>
+  </head>
+  <body>
+    <table>
+      <tr>
+        <td><svg width="500px" height="150px" id="top"></svg></td>
+        <td id="td1" width="10%" style="text-align: center">
+          <p id="Pen_Text">Penguin Species</p>
+          <button
+            id="adelie"
+            class="button"
+            onclick="window.location.href='?species=Adelie';"
+          >
+            Adelie
+          </button>
+          <br />
+          <button
+            id="gentoo"
+            class="button"
+            onclick="window.location.href='?species=Gentoo';"
+          >
+            Gentoo
+          </button>
+          <br />
+          <button
+            id="chinstrap"
+            class="button"
+            onclick="window.location.href='?species=Chinstrap';"
+          >
+            Chinstrap
+          </button>
+        </td>
+      </tr>
+      <tr>
+        <td>
+          <svg
+            width="500px"
+            height="500px"
+            viewBox="0 0 1000 1000"
+            id="main"
+          ></svg>
+        </td>
+        <td><svg width="300px" height="500px" id="right"></svg></td>
+      </tr>
+    </table>
+
+    <script>
+      var species_name = new URL(window.location.href).searchParams.get(
+        "species"
+      );
+      if (!species_name) {
+        species_name = "Adelie";
+      }
+      let palmer_penguin_species = "./data/palmer_penguin_species.tsv";
+      // loading data
+      d3.tsv(palmer_penguin_species).then(main);
+
+      // Subplots
+      let fig_main = d3
+        .select("#main")
+        .append("g")
+        .append("rect")
+        .attr("class", "fig")
+        .attr("width", "100%")
+        .attr("height", "100%");
+      // top svg
+      let fig_top = d3
+        .select("#top")
+        .append("g")
+        .append("rect")
+        .attr("class", "fig")
+        .attr("width", "100%")
+        .attr("height", "100%");
+      // right svg
+      let fig_right = d3
+        .select("#right")
+        .append("g")
+        .append("rect")
+        .attr("class", "fig")
+        .attr("width", "100%")
+        .attr("height", "100%");
+
+      var div = d3
+        .select("body")
+        .append("div")
+        .attr("class", "tooltip")
+        .style("opacity", 0);
+
+      function main(data) {
+        console.log(data);
+        let island_legend = ["Torgersen", "Biscoe", "Dream"];
+        let classic_colors = ["#0a9396", "#ee9b00", "#9b2226"];
+        if (species_name === "Chinstrap") {
+          island_legend = ["Dream"];
+          classic_colors = ["#9b2226"];
+        }
+        if (species_name === "Gentoo") {
+          island_legend = ["Biscoe"];
+          classic_colors = ["#ee9b00"];
+        }
+
+        let culmen_length_mm = d3.map(data, function (d) {
+          if (d.species === species_name) {
+            return +d.culmen_length_mm;
+          }
+        });
+        culmen_length_mm = culmen_length_mm.filter(Number);
+
+        let culmen_depth_mm = d3.map(data, function (d) {
+          if (d.species === species_name) {
+            return +d.culmen_depth_mm;
+          }
+        });
+        culmen_depth_mm = culmen_depth_mm.filter(Number);
+
+        let flipper_length_mm = d3.map(data, function (d) {
+          if (d.species === species_name) {
+            return +d.flipper_length_mm;
+          }
+        });
+        flipper_length_mm = flipper_length_mm.filter(Number);
+
+        let island_code = d3.map(data, function (d) {
+          if (d.species === species_name) {
+            if (d.island === "Torgersen") {
+              return 1;
+            } else if (d.island === "Biscoe") {
+              return 2;
+            } else {
+              return 3;
+            }
+          }
+        });
+        island_code = island_code.filter(Number);
+
+        // main svg
+        scatter_plot(
+          culmen_length_mm,
+          culmen_depth_mm,
+          flipper_length_mm,
+          island_code,
+          "main",
+          (title = species_name),
+          (xLabel = "Culmen Length (mm)"),
+          (yLabel = "Culmen Depth (mm)"),
+          (legend = island_legend),
+          (legend_colors = classic_colors)
+        );
+        bar_plot(culmen_length_mm, 10, "top");
+
+        h_bar_plot(culmen_depth_mm, 10, "right");
+      }
+      document.getElementById("td1").addEventListener("mouseover", mouseOver);
+      function mouseOver() {
+        document.getElementById("adelie").innerHTML = "Adelie";
+        document.getElementById("gentoo").innerHTML = "Gentoo";
+        document.getElementById("chinstrap").innerHTML = "Chinstrap";
+      }
+    </script>
+  </body>
+</html>
